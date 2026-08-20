@@ -18,7 +18,7 @@ const Footer = () => {
             <h4 className="font-body text-xs tracking-[0.2em] uppercase text-foreground mb-4 font-semibold">Shop</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/shop" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Link to="https://ntygear.com/collections/all" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
                   All Products
                 </Link>
               </li>
@@ -30,17 +30,17 @@ const Footer = () => {
             <h4 className="font-body text-xs tracking-[0.2em] uppercase text-foreground mb-4 font-semibold">Info</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/story" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Link to="https://ntygear.com/pages/the-nty-story" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/partners" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Link to="https://ntygear.com/pages/partners" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
                   Partner Program
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Link to="https://ntygear.com/pages/contact-us" className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
                   Contact
                 </Link>
               </li>

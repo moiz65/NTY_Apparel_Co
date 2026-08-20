@@ -31,21 +31,21 @@ const TIER_PRODUCTS = [
     name: "225 lbs club",
     handle: "merch-mockups-for-225lbs-club", // Placeholder 
     image: "https://cdn.shopify.com/s/files/1/0627/6933/2295/files/64A5B611-B159-4FDF-BA83-FCFB73E2EB5F.png?v=1787179212", // Placeholder
-    price: "$0.00"
+    price: "$55.00"
   },
   {
     lbs: 315, 
     name: "315 lbs club",
     handle: "315lbs-club", // Placeholder
     image: "https://cdn.shopify.com/s/files/1/0627/6933/2295/files/B74049B8-1401-4C27-8834-6FF2BAE0D21B.png?v=1787179537", // Placeholder
-    price: "$0.00"
+    price: "$55.00"
   },
   { 
     lbs: 405, 
     name: "405 lbs club",
     handle: "405lbs-club", // Placeholder
     image: "https://cdn.shopify.com/s/files/1/0627/6933/2295/files/7A6D3BC6-6291-45E2-AF8B-2A90FBF0E1D9.png?v=1787179897", // Placeholder
-    price: "$0.00"
+    price: "$55.00"
   }
 ];
 

@@ -1,7 +1,7 @@
 // components/BenchClubForm.tsx
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Upload, CheckCircle2, AlertCircle, Lock } from "lucide-react";
+import { ArrowRight, Upload, CheckCircle2, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +30,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [step, setStep] = useState<"idle" | "uploading" | "submitting" | "done">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const liftOptions = ["Bench Press", "Deadlift"];
@@ -66,43 +67,63 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
         return;
       }
       setFormData(prev => ({ ...prev, videoFile: file }));
+      setUploadProgress(0);
+      setStep("idle");
     }
   };
 
-  // components/BenchClubForm.tsx - The uploadVideo function
-
+  // ✅ Upload Video with Progress Tracking
   const uploadVideo = async (file: File): Promise<string> => {
     const token = localStorage.getItem('auth_token');
     const videoFormData = new FormData();
     videoFormData.append("video", file);
 
-    try {
-      const response = await fetch(`${API_URL}/api/bench-club/upload-video`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: videoFormData,
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(progress);
+        }
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Video upload failed");
-      }
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.data.video_url);
+          } catch (error) {
+            reject(new Error("Invalid response from server"));
+          }
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText);
+            reject(new Error(error.error || "Video upload failed"));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      });
 
-      const data = await response.json();
-      return data.data.video_url;
-    } catch (error) {
-      console.error("Upload error:", error);
-      throw error;
-    }
+      xhr.addEventListener("error", () => {
+        reject(new Error("Network error occurred"));
+      });
+
+      xhr.addEventListener("abort", () => {
+        reject(new Error("Upload cancelled"));
+      });
+
+      xhr.open("POST", `${API_URL}/api/bench-club/upload-video`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.send(videoFormData);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
 
-    // ✅ Check if user is logged in
     if (!user) {
       toast.error("Please login first to submit your application.");
       navigate("/auth");
@@ -118,23 +139,30 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
 
     setLoading(true);
     setUploadProgress(0);
+    setStep("uploading");
 
     try {
       const token = localStorage.getItem('auth_token');
 
-      // 1. Upload video
+      // 1. Upload video with progress
       let videoUrl: string;
       try {
         videoUrl = await uploadVideo(videoFile);
         setUploadProgress(100);
+        toast.success("Video uploaded!");
       } catch (uploadError) {
         console.error("Video upload failed:", uploadError);
-        toast.error("Failed to upload video. Please try again.");
+        toast.error(uploadError instanceof Error ? uploadError.message : "Failed to upload video.");
         setLoading(false);
+        setStep("idle");
+        setUploadProgress(0);
         return;
       }
 
-      // 2. Submit application with user_id
+      // 2. Submit application
+      setStep("submitting");
+      toast.info("Submitting application...");
+
       const response = await fetch(`${API_URL}/api/bench-club/apply`, {
         method: "POST",
         headers: {
@@ -160,10 +188,11 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
         throw new Error(data.error || "Submission failed.");
       }
 
+      setStep("done");
       setSubmitted(true);
       toast.success("Application submitted successfully!");
 
-      // 3. Send confirmation email
+      // 3. Send confirmation email (background)
       try {
         await fetch(`${API_URL}/api/email/send`, {
           method: "POST",
@@ -184,9 +213,9 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
       toast.error(message);
+      setStep("idle");
     } finally {
       setLoading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -248,6 +277,22 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
     );
   }
 
+  // ✅ Get button text based on step
+  const getButtonText = () => {
+    if (!loading) return "Submit Application";
+    
+    switch (step) {
+      case "uploading":
+        return `Uploading... ${uploadProgress}%`;
+      case "submitting":
+        return "Submitting...";
+      case "done":
+        return "Complete!";
+      default:
+        return "Please wait...";
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -289,7 +334,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Full Name - Auto-filled but editable */}
+            {/* Full Name */}
             <div>
               <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
                 FULL NAME <span className="text-red-500">*</span>
@@ -306,7 +351,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               />
             </div>
 
-            {/* Email - Auto-filled but editable */}
+            {/* Email */}
             <div>
               <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
                 EMAIL <span className="text-red-500">*</span>
@@ -323,6 +368,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               />
             </div>
           </div>
+
           {/* Instagram / TikTok Handle */}
           <div>
             <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
@@ -400,6 +446,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               </select>
             </div>
           </div>
+
           {/* Video Upload */}
           <div>
             <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
@@ -428,18 +475,33 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               </div>
             </div>
 
-            {/* Upload Progress */}
-            {loading && uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="mt-2">
-                <div className="w-full bg-[#0003] rounded-full h-1 overflow-hidden">
+            {/* ✅ Upload Progress Bar - 0% to 100% */}
+            {loading && step === "uploading" && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-gray-700">
+                    <Loader2 className="inline w-3 h-3 animate-spin mr-1" />
+                    Uploading video...
+                  </span>
+                  <span className="text-xs font-medium text-[#B8860B]">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="bg-[#B8860B] h-1 rounded-full transition-all duration-300"
+                    className="h-2.5 rounded-full transition-all duration-300 bg-[#B8860B]"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="font-body text-xs text-gray-500 mt-1">
-                  Uploading... {uploadProgress}%
-                </p>
+              </div>
+            )}
+
+            {loading && step === "submitting" && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#B8860B]" />
+                  <span>Submitting your application...</span>
+                </div>
               </div>
             )}
           </div>
@@ -481,14 +543,14 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
             <button
               type="submit"
               disabled={loading}
-              className="group w-full relative bg-black text-white font-body text-sm tracking-[0.15em] uppercase px-8 py-4 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+              className="group w-full relative bg-black text-white font-body text-sm tracking-[0.15em] uppercase px-8 py-4 overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed rounded-lg"
             >
               <span className="absolute inset-0 bg-[#B8860B] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
               <span className="relative z-10 flex items-center justify-center gap-3">
                 {loading ? (
                   <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                    Submitting...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {getButtonText()}
                   </>
                 ) : (
                   <>

@@ -102,8 +102,10 @@ router.post('/upload-video', authenticateToken, upload.single('video'), async (r
   }
 });
 
-// ✅ Submit Application with user_id
+// ✅ Submit Application - No Email
 router.post('/apply', authenticateToken, async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const {
       user_id,
@@ -117,49 +119,79 @@ router.post('/apply', authenticateToken, async (req, res) => {
       additionalNotes,
     } = req.body;
 
-    // ✅ Validate user exists
-    const [userCheck] = await pool.execute(
-      'SELECT id FROM users WHERE id = ?',
-      [user_id]
-    );
-
-    if (!Array.isArray(userCheck) || userCheck.length === 0) {
-      return res.status(404).json({
+    // ✅ Validation - Fast check
+    if (!user_id || !fullName || !email || !socialHandle || !lift || !weightTier || !videoUrl) {
+      return res.status(400).json({
         success: false,
-        error: 'User not found',
+        error: 'All required fields must be filled.',
+        required: ['user_id', 'fullName', 'email', 'socialHandle', 'lift', 'weightTier', 'videoUrl']
       });
     }
 
-    // ✅ Insert application with user_id
+    // ✅ Check user exists
+    const [userCheck] = await pool.execute(
+      'SELECT COUNT(*) as count FROM users WHERE id = ?',
+      [user_id]
+    );
+
+    const userExists = userCheck[0]?.count > 0;
+
+    if (!userExists) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found. Please login again.',
+      });
+    }
+
+    // ✅ Insert application
     const [result] = await pool.execute(
       `INSERT INTO bench_club_applications 
-       (user_id, full_name, email, instagram_handle, phone_number, lift_type, weight_tier, video_url, additional_notes, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (user_id, full_name, email, instagram_handle, phone_number, lift_type, weight_tier, video_url, additional_notes, status, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         user_id,
-        fullName.trim(),
-        email.trim().toLowerCase(),
-        socialHandle.trim(),
-        phoneNumber || null,
-        lift,
-        weightTier,
-        videoUrl,
-        additionalNotes || null,
+        fullName.trim().substring(0, 100),
+        email.trim().toLowerCase().substring(0, 100),
+        socialHandle.trim().substring(0, 50),
+        phoneNumber ? phoneNumber.trim().substring(0, 20) : null,
+        lift.trim().substring(0, 50),
+        parseInt(weightTier, 10) || 0,
+        videoUrl.trim().substring(0, 500),
+        additionalNotes ? additionalNotes.trim().substring(0, 500) : null,
         'pending',
       ]
     );
 
+    const insertId = result.insertId;
+    const responseTime = Date.now() - startTime;
+
+    console.log(`✅ Application submitted in ${responseTime}ms, ID: ${insertId}`);
+
+    // ✅ Send immediate response - NO EMAIL
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully!',
       data: {
-        id: result.insertId,
+        id: insertId,
         user_id,
         video_url: videoUrl,
+        status: 'pending',
+        submitted_at: new Date().toISOString(),
       },
     });
+
   } catch (error) {
-    console.error('Submit Error:', error);
+    const responseTime = Date.now() - startTime;
+    console.error(`❌ Submit Error (${responseTime}ms):`, error);
+
+    // ✅ Check for duplicate entry
+    if (error && error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        success: false,
+        error: 'You have already submitted an application for this tier.',
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: 'Something went wrong. Please try again.',

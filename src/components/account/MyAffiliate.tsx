@@ -132,7 +132,7 @@ export function MyAffiliate({ email }: { email: string }) {
         <Users className="w-8 h-8 mx-auto mb-4 text-muted-foreground/50" strokeWidth={1.5} />
         <p className="text-sm tracking-wider uppercase text-muted-foreground">You're not an affiliate yet</p>
         <p className="text-xs text-muted-foreground mt-2">Apply through the Partners page to start earning.</p>
-        <a href="/partners" className="inline-block mt-5 bg-foreground text-background px-5 py-2.5 text-xs tracking-[0.2em] uppercase">Become a partner</a>
+        <a href="http://ntygear.com/pages/partners" className="inline-block mt-5 bg-foreground text-background px-5 py-2.5 text-xs tracking-[0.2em] uppercase">Become a partner</a>
       </section>
     );
   }
