@@ -27,7 +27,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const Account = () => {
   const navigate = useNavigate();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, updateUser } = useAuth(); // ✅ Add updateUser
   const [section, setSection] = useState<Section>("rewards");
   const [displayName, setDisplayName] = useState("");
 
@@ -44,7 +44,7 @@ const Account = () => {
       return;
     }
 
-    // ✅ Set display name
+    // ✅ Set display name - Full name show karein
     if (user?.name) {
       setDisplayName(user.name);
     }
@@ -58,6 +58,15 @@ const Account = () => {
     } catch (error) {
       toast.error("Couldn't sign out");
       console.error("Sign out error:", error);
+    }
+  };
+
+  // ✅ Update display name when user changes
+  const handleNameUpdate = (newName: string) => {
+    setDisplayName(newName);
+    // ✅ Update user in context
+    if (user) {
+      updateUser({ ...user, name: newName });
     }
   };
 
@@ -75,8 +84,8 @@ const Account = () => {
     return null;
   }
 
-  const firstName = displayName.split(/[\s@.]/)[0] || "Member";
-  const titleCase = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  // ✅ Full name show karein - No split
+  const fullName = displayName || "Member";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -107,7 +116,7 @@ const Account = () => {
             <h1 className="text-4xl sm:text-5xl tracking-tight leading-none" style={{ fontFamily: "'Arial Black', sans-serif" }}>
               My Account
             </h1>
-            <p className="text-sm text-muted-foreground mt-2">Welcome back, {titleCase}</p>
+            <p className="text-sm text-muted-foreground mt-2">Welcome back, {fullName}</p>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
@@ -158,7 +167,7 @@ const Account = () => {
                   userId={user.id}
                   email={user.email}
                   displayName={displayName}
-                  onSaved={(n) => setDisplayName(n)}
+                  onSaved={handleNameUpdate} // ✅ Pass updated function
                 />
               )}
               {section === "addresses" && <AddressesPlaceholder />}
@@ -184,11 +193,21 @@ function AccountDetails({
   const [name, setName] = useState(displayName);
   const [saving, setSaving] = useState(false);
 
+  // ✅ Update local state when displayName prop changes
+  useEffect(() => {
+    setName(displayName);
+  }, [displayName]);
+
   const save = async () => {
+    if (!name.trim() || name.trim() === displayName) {
+      toast.info("No changes to save");
+      return;
+    }
+
     setSaving(true);
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`${API_URL}/api/users/profile`, {
+      const response = await fetch(`${API_URL}/api/bench-club/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -204,7 +223,12 @@ function AccountDetails({
       }
 
       toast.success("Saved successfully");
+      
+      // ✅ Update local state
+      setName(name.trim());
+      // ✅ Call parent callback to update context and localStorage
       onSaved(name.trim());
+      
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't save");
     } finally {
@@ -228,7 +252,7 @@ function AccountDetails({
       </div>
       <button
         onClick={save}
-        disabled={saving || !name.trim() || name === displayName}
+        disabled={saving || !name.trim() || name.trim() === displayName}
         className="bg-foreground text-background px-5 py-2.5 text-xs tracking-[0.2em] uppercase disabled:opacity-40"
       >
         {saving ? "Saving..." : "Save Changes"}

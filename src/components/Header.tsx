@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
-  { to: "/shop", label: "Shop" },
-  { to: "/story", label: "The NTY Story" },
-  { to: "/partners", label: "Partner Program" },
-  { to: "/bench-club", label: "Bench Club" },
-  { to: "/contact", label: "Contact Us" },
+  { to: "https://ntygear.com/collections/all", label: "Shop" },
+  { to: "https://ntygear.com/pages/the-nty-story", label: "The NTY Story" },
+  { to: "https://ntygear.com/pages/partners", label: "Partner Program" },
+  { to: "https://ntygear.com/pages/natty-verified", label: "Natty Verified" },
+  { to: "https://ntygear.com/pages/contact-us", label: "Contact Us" },
 ];
 
 const Header = () => {
@@ -34,7 +34,7 @@ const Header = () => {
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <Link to="/" className="text-[1.35rem] lg:text-[1.65rem] tracking-widest text-foreground leading-none -ml-3" style={{ fontFamily: "'Arial Black', 'Arial Bold', Gadget, sans-serif" }}>
+            <Link to="https://ntygear.com" className="text-[1.35rem] lg:text-[1.65rem] tracking-widest text-foreground leading-none -ml-3" style={{ fontFamily: "'Arial Black', 'Arial Bold', Gadget, sans-serif" }}>
               NATTY
             </Link>
           </div>

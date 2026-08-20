@@ -15,6 +15,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
+  updateUser: (user: User) => void;
   signOut: () => Promise<void>;
   isAdmin: () => boolean;
 };
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 signIn called with:', { email });
-    
+
     try {
       const response = await fetch(`${API_URL}/api/auth/signin`, {
         method: 'POST',
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { user, token } = data.data;
       console.log('✅ signIn success, user:', user, 'role:', user.role);
-      
+
       setUser(user);
       setToken(token);
       localStorage.setItem('auth_token', token);
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { user, token } = data.data;
       console.log('✅ signUp success, user:', user, 'role:', user.role);
-      
+
       setUser(user);
       setToken(token);
       localStorage.setItem('auth_token', token);
@@ -111,6 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error(message);
       throw error;
     }
+  };
+
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
   };
 
   const signOut = async () => {
@@ -127,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, signIn, signUp, signOut, isAdmin }}>
+    <AuthContext.Provider value={{ user, token, loading, signIn, signUp, signOut, isAdmin, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

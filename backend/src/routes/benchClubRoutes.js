@@ -383,7 +383,7 @@ router.get('/members', async (req, res) => {
       FROM bench_club_members 
       ORDER BY created_at DESC`
     );
-    
+
     res.json({
       success: true,
       data: rows,
@@ -393,6 +393,71 @@ router.get('/members', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch members.',
+    });
+  }
+});
+
+// ✅ Profile Update Route (with authentication)
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    // ✅ Get userId from authenticated token
+    const userId = req.user.id;
+    const { name, email } = req.body;
+
+    console.log('📝 Updating profile for user:', userId, { name, email });
+
+    // ✅ Build dynamic query - only update fields that are provided
+    let updateFields = [];
+    let values = [];
+
+    if (name !== undefined && name !== null) {
+      updateFields.push('name = ?');
+      values.push(name.trim());
+    }
+
+    if (email !== undefined && email !== null) {
+      updateFields.push('email = ?');
+      values.push(email.trim().toLowerCase());
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to update.',
+      });
+    }
+
+    // ✅ Add userId to values array
+    values.push(userId);
+
+    const query = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
+    console.log('🔍 Query:', query, 'Values:', values);
+
+    const [result] = await pool.execute(query, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found.',
+      });
+    }
+
+    // ✅ Get updated user data
+    const [rows] = await pool.execute(
+      'SELECT id, name, email, role FROM users WHERE id = ?',
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully.',
+      data: rows[0] || null,
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update profile.',
     });
   }
 });
