@@ -32,7 +32,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const liftOptions = ["Bench Press", "Deadlift", "Squat", "Other"];
+  const liftOptions = ["Bench Press", "Deadlift"];
   const weightOptions = ["225", "315", "405"];
 
   // ✅ Auto-fill user data when logged in
@@ -255,7 +255,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
       transition={{ duration: 0.5 }}
       className="bg-white p-8 md:p-10 rounded-xl shadow-lg border border-gray-100"
     >
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-[38rem] mx-auto">
         {/* User Info Banner */}
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
@@ -269,62 +269,63 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
 
         {/* Headers Section */}
         <div className="text-center mb-8">
-          <p className="font-body text-[10px] tracking-[0.5em] uppercase text-[#B8860B] mb-2">
+          <p className="font-body text-[10px] md:text-[16px] tracking-[0.4em] uppercase text-[#B8860B] mb-2 font-semibold">
             OFFICIAL REGISTRATION
           </p>
-          <h2 className="font-heading text-4xl md:text-5xl tracking-wider text-black mb-2">
-            NATTY <span className="text-[#B8860B]">VERIFIED</span>
+          <h2 className="font-heading leading-[45px] text-[2.5rem] md:text-[4.5rem] md:leading-[4.5rem] tracking-wider text-black md:mb-2 ">
+            NATTY VERIFIED
           </h2>
-          <h3 className="font-heading text-2xl md:text-3xl tracking-wider text-black/80 mb-4">
+          <h3 className="font-heading mb-[20px] leading-[45px] text-[2.5rem] md:text-[4.5rem] md:leading-[4.5rem] tracking-wider text-[#B8860B] md:mb-4">
             CLUB REGISTRATION
           </h3>
-          <p className="font-body text-sm text-gray-600 leading-relaxed">
+          <p className="font-body text-[12px] md:text-sm text-gray-600 leading-relaxed">
             Submit only after your video has been verified through <span className="text-[#B8860B] font-semibold">@NTYGear</span>.
           </p>
-          <p className="font-body text-xs text-gray-500 mt-2">
+          <p className="font-body text-[12px] md:text-sm text-gray-600 mt-2">
             All submissions are reviewed individually before approval
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Full Name - Auto-filled but editable */}
-          <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
-              FULL NAME <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="eg: Jane smith"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
-              required
-              disabled={loading}
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Full Name - Auto-filled but editable */}
+            <div>
+              <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
+                FULL NAME <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="fullName"
+                placeholder="eg: Jane smith"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
+                required
+                disabled={loading}
+              />
+            </div>
 
-          {/* Email - Auto-filled but editable */}
-          <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
-              EMAIL <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              placeholder="jane@gmail.com"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
-              required
-              disabled={loading}
-            />
+            {/* Email - Auto-filled but editable */}
+            <div>
+              <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
+                EMAIL <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="jane@gmail.com"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
+                required
+                disabled={loading}
+              />
+            </div>
           </div>
-
           {/* Instagram / TikTok Handle */}
           <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
+            <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
               INSTAGRAM / TIKTOK HANDLE <span className="text-red-500">*</span>
             </label>
             <input
@@ -333,7 +334,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               placeholder="@jame"
               value={formData.socialHandle}
               onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-[#00000008] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
+              className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
               required
               disabled={loading}
             />
@@ -341,7 +342,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
 
           {/* Phone Number */}
           <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
+            <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
               PHONE NUMBER
             </label>
             <input
@@ -350,7 +351,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               placeholder="(555) 123-4567"
               value={formData.phoneNumber}
               onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-[#00000008] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
+              className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg"
               disabled={loading}
             />
             <p className="font-body text-xs text-gray-500 mt-1.5 leading-relaxed">
@@ -358,49 +359,50 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
             </p>
           </div>
 
-          {/* Lift */}
-          <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
-              LIFT <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="lift"
-              value={formData.lift}
-              onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-[#00000008] text-gray-900 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg appearance-none"
-              required
-              disabled={loading}
-            >
-              <option value="">Select an Option...</option>
-              {liftOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Lift */}
+            <div>
+              <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
+                LIFT <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="lift"
+                value={formData.lift}
+                onChange={handleInputChange}
+                className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg appearance-none"
+                required
+                disabled={loading}
+              >
+                <option value="">Select an Option...</option>
+                {liftOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Weight Tier */}
-          <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
-              WEIGHT TIER <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="weightTier"
-              value={formData.weightTier}
-              onChange={handleInputChange}
-              className="w-full border border-gray-200 bg-[#00000008] text-gray-900 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg appearance-none"
-              required
-              disabled={loading}
-            >
-              <option value="">Select an Option...</option>
-              {weightOptions.map(opt => (
-                <option key={opt} value={opt}>{opt} lbs</option>
-              ))}
-            </select>
+            {/* Weight Tier */}
+            <div>
+              <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
+                WEIGHT TIER <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="weightTier"
+                value={formData.weightTier}
+                onChange={handleInputChange}
+                className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg appearance-none"
+                required
+                disabled={loading}
+              >
+                <option value="">Select an Option...</option>
+                {weightOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt} lbs</option>
+                ))}
+              </select>
+            </div>
           </div>
-
           {/* Video Upload */}
           <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
+            <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
               YOUR VERIFICATION VIDEO <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -413,7 +415,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
                 required
                 disabled={loading}
               />
-              <div className={`w-full border border-gray-200 bg-[#00000008] text-gray-900 font-body text-sm px-5 py-3.5 flex items-center justify-between rounded-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#B8860B] transition-colors'
+              <div className={`w-full border border-[#0003] bg-[#0000001a] text-gray-900 font-body text-sm px-5 py-3.5 flex items-center justify-between rounded-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#B8860B] transition-colors'
                 }`}>
                 <span className={formData.videoFile ? 'text-gray-900' : 'text-gray-400'}>
                   {formData.videoFile ? formData.videoFile.name : "Choose File"}
@@ -429,7 +431,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
             {/* Upload Progress */}
             {loading && uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-2">
-                <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
+                <div className="w-full bg-[#0003] rounded-full h-1 overflow-hidden">
                   <div
                     className="bg-[#B8860B] h-1 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
@@ -460,7 +462,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
 
           {/* Additional Notes */}
           <div>
-            <label className="font-body text-sm font-medium text-gray-800 block mb-1.5">
+            <label className="font-body text-[11px] font-medium text-[#0009] tracking-[2.2px] block mb-1.5">
               ADDITIONAL NOTES
             </label>
             <textarea
@@ -469,7 +471,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
               value={formData.additionalNotes}
               onChange={handleInputChange}
               rows={3}
-              className="w-full border border-gray-200 bg-[#00000008] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg resize-none"
+              className="w-full border border-[#0003] bg-[#0000001a] text-gray-900 placeholder:text-gray-400 font-body text-sm px-5 py-3.5 focus:outline-none focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]/20 transition-all rounded-lg resize-none"
               disabled={loading}
             />
           </div>
