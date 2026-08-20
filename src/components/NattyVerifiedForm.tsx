@@ -253,7 +253,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white p-8 md:p-10 rounded-xl shadow-lg border border-gray-100"
+      className="bg-white p-5 md:p-10 rounded-xl shadow-lg border border-gray-100"
     >
       <div className="max-w-[38rem] mx-auto">
         {/* User Info Banner */}
@@ -269,7 +269,7 @@ const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
 
         {/* Headers Section */}
         <div className="text-center mb-8">
-          <p className="font-body text-[10px] md:text-[16px] tracking-[0.4em] uppercase text-[#B8860B] mb-2 font-semibold">
+          <p className="font-body text-[12px] md:text-[16px] tracking-[5px] uppercase text-[#B8860B] mb-[20px] font-semibold">
             OFFICIAL REGISTRATION
           </p>
           <h2 className="font-heading leading-[45px] text-[2.5rem] md:text-[4.5rem] md:leading-[4.5rem] tracking-wider text-black md:mb-2 ">
