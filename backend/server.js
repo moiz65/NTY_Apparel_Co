@@ -10,6 +10,7 @@ import path from 'path';
 
 import benchClubRoutes from './src/routes/benchClubRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
+import emailRoutes from './src/routes/emailRoutes.js';
 
 dotenv.config();
 
@@ -93,6 +94,7 @@ const uploadToCloudinary = async (fileBuffer, fileName) => {
 
 app.use('/api/bench-club', benchClubRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/email', emailRoutes);
 
 
 

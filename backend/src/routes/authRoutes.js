@@ -3,6 +3,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db/index.js';
+import { sendEmail, getOTPEmailTemplate } from '../services/emailService.js'; 
 
 const router = express.Router();
 
@@ -97,7 +98,7 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// ✅ Sign In
+// Sign In
 router.post('/signin', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -226,6 +227,167 @@ router.get('/check-role/:userId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to check role',
+    });
+  }
+});
+
+// src/routes/authRoutes.ts
+
+// ✅ Forgot Password - Send OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required.',
+      });
+    }
+
+    // Check if user exists
+    const [rows] = await pool.execute(
+      'SELECT id, name FROM users WHERE email = ?',
+      [email.toLowerCase()]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        error: 'No account found with this email.',
+      });
+    }
+
+    const user = rows[0];
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save OTP in database
+    await pool.execute(
+      `INSERT INTO password_resets (email, otp, expires_at) 
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE otp = ?, expires_at = ?`,
+      [email.toLowerCase(), otp, expiresAt, otp, expiresAt]
+    );
+
+    // ✅ SEND EMAIL WITH OTP (FIXED)
+    try {
+      const template = getOTPEmailTemplate(otp, user.name || 'User');
+      await sendEmail(email, template);
+      console.log(`✅ OTP sent to ${email}`);
+    } catch (emailError) {
+      console.error('❌ Email send error:', emailError);
+      // Still return success to user, but log error
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP sent to your email.',
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send OTP.',
+    });
+  }
+});
+
+// ✅ Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required.',
+      });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM password_resets WHERE email = ? AND otp = ? AND expires_at > NOW()',
+      [email.toLowerCase(), otp]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired OTP.',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP verified successfully.',
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify OTP.',
+    });
+  }
+});
+
+// ✅ Reset Password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required.',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters.',
+      });
+    }
+
+    // Verify OTP
+    const [rows] = await pool.execute(
+      'SELECT * FROM password_resets WHERE email = ? AND otp = ? AND expires_at > NOW()',
+      [email.toLowerCase(), otp]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired OTP.',
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.execute(
+      'UPDATE users SET password_hash = ? WHERE email = ?',
+      [hashedPassword, email.toLowerCase()]
+    );
+
+    // Delete OTP record
+    await pool.execute(
+      'DELETE FROM password_resets WHERE email = ?',
+      [email.toLowerCase()]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully.',
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reset password.',
     });
   }
 });

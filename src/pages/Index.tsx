@@ -12,7 +12,7 @@ import FAQSection from "@/components/FAQSection";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <WelcomePopup />
+      {/* <WelcomePopup /> */}
       <UrgencyBanner />
       <Header />
       <HeroSection />
