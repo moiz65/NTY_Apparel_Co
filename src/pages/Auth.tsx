@@ -417,12 +417,12 @@ const Auth = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="max-w-md mx-auto px-6 py-16">
-        {/* ✅ Subdomain indicator */}
+        {/* ✅ Subdomain indicator
         {isSubdomain && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
             <p className="text-xs text-blue-700">🔐 Secure login portal</p>
           </div>
-        )}
+        )} */}
 
         <h1 className="text-3xl tracking-widest mb-2" style={{ fontFamily: "'Arial Black', sans-serif" }}>
           {mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
