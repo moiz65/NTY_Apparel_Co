@@ -12,7 +12,6 @@ import { RefTracker } from "./components/RefTracker.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
-
 // Lazy-loaded routes to keep the initial bundle small + fast first paint.
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const Product = lazy(() => import("./pages/Product.tsx"));
@@ -37,6 +36,60 @@ const ScrollToTop = () => {
   return null;
 };
 
+// ✅ Cross-Domain Auth Handler Component
+const CrossDomainAuthHandler = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // ✅ Check for auth in URL hash (cross-domain login from login.ntygear.com)
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#auth=')) {
+      try {
+        const authData = JSON.parse(atob(hash.replace('#auth=', '')));
+        console.log('✅ Cross-domain auth detected from URL hash:', authData);
+        
+        // ✅ Store in localStorage
+        localStorage.setItem('auth_token', authData.token);
+        localStorage.setItem('auth_user', JSON.stringify(authData.user));
+        
+        // ✅ Remove hash from URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        
+        // ✅ Reload to apply auth
+        window.location.reload();
+        return;
+      } catch (error) {
+        console.error('❌ Hash auth error:', error);
+      }
+    }
+    
+    // ✅ Check sessionStorage for cross-domain auth
+    const authData = sessionStorage.getItem('cross_domain_auth');
+    if (authData) {
+      try {
+        const { token, user } = JSON.parse(authData);
+        console.log('✅ Cross-domain auth from sessionStorage:', { user });
+        
+        // ✅ Store in localStorage
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('auth_user', JSON.stringify(user));
+        
+        // ✅ Clear sessionStorage
+        sessionStorage.removeItem('cross_domain_auth');
+        
+        // ✅ Reload to apply auth
+        window.location.reload();
+        return;
+      } catch (error) {
+        console.error('❌ Session storage auth error:', error);
+        sessionStorage.removeItem('cross_domain_auth');
+      }
+    }
+  }, [location]);
+
+  return null;
+};
+
 const RouteFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center text-xs tracking-widest uppercase text-muted-foreground">
     Loading…
@@ -52,6 +105,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <CrossDomainAuthHandler /> {/* ✅ Add cross-domain auth handler */}
           <ScrollToTop />
           <RefTracker />
           <SupportTab />
@@ -68,7 +122,7 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/natty-verification" element={<NattyVerified />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
