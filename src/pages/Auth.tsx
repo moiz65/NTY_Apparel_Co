@@ -50,7 +50,7 @@ const Auth = () => {
         const userData = encodeURIComponent(JSON.stringify(user));
         
         // ✅ Use query parameters instead of hash (Shopify supports this)
-        const redirectUrl = `${mainDomain}/?auth_token=${token}&auth_user=${userData}&auth_success=true`;
+        const redirectUrl = `${mainDomain}/?auth_user=${user.role}&auth_success=true`;
         console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
 
         // ✅ Use window.location.href for Shopify redirect
