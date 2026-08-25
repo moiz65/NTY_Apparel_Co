@@ -33,23 +33,94 @@ const Auth = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // ✅ Redirect if already logged in - GO TO HOME
+  // ✅ Detect if on subdomain
+  const isSubdomain = window.location.hostname.includes('login.');
+  const mainDomain = 'https://ntygear.com';
+
+  // ✅ Check for cross-domain auth on main domain
+  useEffect(() => {
+    if (!isSubdomain) {
+      // ✅ Check URL hash first
+      const hash = window.location.hash;
+      if (hash.startsWith('#auth=')) {
+        try {
+          const authData = JSON.parse(atob(hash.replace('#auth=', '')));
+          console.log('✅ Auth from URL hash:', authData);
+          
+          // ✅ Store in localStorage
+          localStorage.setItem('auth_token', authData.token);
+          localStorage.setItem('auth_user', JSON.stringify(authData.user));
+          
+          // ✅ Remove hash from URL
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          
+          // ✅ Reload to apply auth
+          window.location.reload();
+          return;
+        } catch (error) {
+          console.error('❌ Hash auth error:', error);
+        }
+      }
+      
+      // ✅ Check sessionStorage
+      const authData = sessionStorage.getItem('cross_domain_auth');
+      if (authData) {
+        try {
+          const { token, user: userData } = JSON.parse(authData);
+          console.log('✅ Cross-domain auth from sessionStorage:', { userData });
+          
+          // ✅ Store in localStorage
+          localStorage.setItem('auth_token', token);
+          localStorage.setItem('auth_user', JSON.stringify(userData));
+          
+          // ✅ Clear sessionStorage
+          sessionStorage.removeItem('cross_domain_auth');
+          
+          // ✅ Reload to apply auth
+          window.location.reload();
+        } catch (error) {
+          console.error('❌ Cross-domain auth error:', error);
+          sessionStorage.removeItem('cross_domain_auth');
+        }
+      }
+    }
+  }, [isSubdomain]);
+
+  // ✅ Redirect if already logged in
   useEffect(() => {
     if (authLoading) return;
     
     if (user && !redirecting) {
       setRedirecting(true);
       
-      // ✅ Both admin and customer go to home after login
-      let destination = 'http://ntygear.com'; //
+      // ✅ If on subdomain, redirect to main domain HOME
+      if (isSubdomain) {
+        const token = localStorage.getItem('auth_token');
+        
+        // ✅ Encode auth data for URL hash
+        const authData = btoa(JSON.stringify({ token, user }));
+        
+        // ✅ Redirect to main domain home with auth hash
+        const redirectUrl = `${mainDomain}/#auth=${authData}`;
+        console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
+        window.location.href = redirectUrl;
+        return;
+      }
+      
+      // ✅ If on main domain, navigate based on role
+      let destination = '/';
+      if (user.role === 'admin') {
+        destination = '/admin';
+      } else if (user.role === 'customer') {
+        destination = '/account';
+      }
       
       console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
-      
       setTimeout(() => {
-        window.location.href = destination;
+        navigate(destination, { replace: true });
       }, 100);
     }
-  }, [user, authLoading, navigate, redirecting]);
+  }, [user, authLoading, navigate, redirecting, isSubdomain]);
 
   // ✅ Handle Sign In / Sign Up
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +144,10 @@ const Auth = () => {
       } else {
         await signIn(email, password);
       }
-      // ✅ After login, useEffect will redirect to home
+      
+      // ✅ After login, useEffect will handle redirect to home
+      console.log('✅ Login successful, redirecting...');
+      
     } catch (error) {
       console.error('❌ Form error:', error);
     } finally {
@@ -220,6 +294,9 @@ const Auth = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {isSubdomain ? 'Redirecting to main site...' : 'Loading...'}
+        </p>
       </div>
     );
   }
@@ -353,6 +430,13 @@ const Auth = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="max-w-md mx-auto px-6 py-16">
+        {/* ✅ Subdomain indicator */}
+        {isSubdomain && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <p className="text-xs text-blue-700">🔐 Secure login portal</p>
+          </div>
+        )}
+
         <h1 className="text-3xl tracking-widest mb-2" style={{ fontFamily: "'Arial Black', sans-serif" }}>
           {mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
         </h1>
@@ -463,9 +547,12 @@ const Auth = () => {
         </button>
 
         <div className="mt-8">
-          <Link to="https://ntygear.com" className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground">
+          <a 
+            href="https://ntygear.com" 
+            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition"
+          >
             ← Back to site
-          </Link>
+          </a>
         </div>
       </main>
     </div>
