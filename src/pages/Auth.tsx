@@ -37,76 +37,27 @@ const Auth = () => {
   const isSubdomain = window.location.hostname.includes('login.');
   const mainDomain = 'https://ntygear.com';
 
-  // ✅ Check for cross-domain auth on main domain
-  useEffect(() => {
-    if (!isSubdomain) {
-      // ✅ Check URL hash first
-      const hash = window.location.hash;
-      if (hash.startsWith('#auth=')) {
-        try {
-          const authData = JSON.parse(atob(hash.replace('#auth=', '')));
-          console.log('✅ Auth from URL hash:', authData);
-          
-          // ✅ Store in localStorage
-          localStorage.setItem('auth_token', authData.token);
-          localStorage.setItem('auth_user', JSON.stringify(authData.user));
-          
-          // ✅ Remove hash from URL
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          
-          // ✅ Reload to apply auth
-          window.location.reload();
-          return;
-        } catch (error) {
-          console.error('❌ Hash auth error:', error);
-        }
-      }
-      
-      // ✅ Check sessionStorage
-      const authData = sessionStorage.getItem('cross_domain_auth');
-      if (authData) {
-        try {
-          const { token, user: userData } = JSON.parse(authData);
-          console.log('✅ Cross-domain auth from sessionStorage:', { userData });
-          
-          // ✅ Store in localStorage
-          localStorage.setItem('auth_token', token);
-          localStorage.setItem('auth_user', JSON.stringify(userData));
-          
-          // ✅ Clear sessionStorage
-          sessionStorage.removeItem('cross_domain_auth');
-          
-          // ✅ Reload to apply auth
-          window.location.reload();
-        } catch (error) {
-          console.error('❌ Cross-domain auth error:', error);
-          sessionStorage.removeItem('cross_domain_auth');
-        }
-      }
-    }
-  }, [isSubdomain]);
-
   // ✅ Redirect if already logged in
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (user && !redirecting) {
       setRedirecting(true);
-      
-      // ✅ If on subdomain, redirect to main domain HOME
+
+      // ✅ If on subdomain, redirect to main domain
       if (isSubdomain) {
         const token = localStorage.getItem('auth_token');
-        
-        // ✅ Encode auth data for URL hash
-        const authData = btoa(JSON.stringify({ token, user }));
-        
+        const userData = btoa(JSON.stringify({ token, user }));
+
         // ✅ Redirect to main domain home with auth hash
-        const redirectUrl = `${mainDomain}/#auth=${authData}`;
+        const redirectUrl = `${mainDomain}/#auth=${userData}`;
         console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
-        window.location.href = redirectUrl;
+
+        // ✅ Use window.location.replace to prevent back button issues
+        window.location.replace(redirectUrl);
         return;
       }
-      
+
       // ✅ If on main domain, navigate based on role
       let destination = '/';
       if (user.role === 'admin') {
@@ -114,7 +65,43 @@ const Auth = () => {
       } else if (user.role === 'customer') {
         destination = '/account';
       }
-      
+
+      console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
+      setTimeout(() => {
+        navigate(destination, { replace: true });
+      }, 100);
+    }
+  }, [user, authLoading, navigate, redirecting, isSubdomain]);
+
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (user && !redirecting) {
+      setRedirecting(true);
+
+      // ✅ If on subdomain, redirect to main domain HOME
+      if (isSubdomain) {
+        const token = localStorage.getItem('auth_token');
+
+        // ✅ Encode auth data for URL hash
+        const authData = btoa(JSON.stringify({ token, user }));
+
+        // ✅ Redirect to main domain home with auth hash
+        const redirectUrl = `${mainDomain}/#auth=${authData}`;
+        console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      // ✅ If on main domain, navigate based on role
+      let destination = '/';
+      if (user.role === 'admin') {
+        destination = '/admin';
+      } else if (user.role === 'customer') {
+        destination = '/account';
+      }
+
       console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
       setTimeout(() => {
         navigate(destination, { replace: true });
@@ -144,10 +131,10 @@ const Auth = () => {
       } else {
         await signIn(email, password);
       }
-      
+
       // ✅ After login, useEffect will handle redirect to home
       console.log('✅ Login successful, redirecting...');
-      
+
     } catch (error) {
       console.error('❌ Form error:', error);
     } finally {
@@ -197,7 +184,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
         }),
@@ -235,7 +222,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
           newPassword: newPassword.trim(),
@@ -318,9 +305,9 @@ const Auth = () => {
             RESET PASSWORD
           </h1>
           <p className="text-sm text-muted-foreground mb-8 uppercase tracking-wider">
-            {!otpSent ? "Enter your email to receive OTP" : 
-             !otpVerified ? "Enter the 6-digit OTP sent to your email" : 
-             "Set your new password"}
+            {!otpSent ? "Enter your email to receive OTP" :
+              !otpVerified ? "Enter the 6-digit OTP sent to your email" :
+                "Set your new password"}
           </p>
 
           {!otpSent ? (
@@ -547,8 +534,8 @@ const Auth = () => {
         </button>
 
         <div className="mt-8">
-          <a 
-            href="https://ntygear.com" 
+          <a
+            href="https://ntygear.com"
             className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition"
           >
             ← Back to site

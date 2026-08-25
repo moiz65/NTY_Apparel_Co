@@ -2,7 +2,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,55 +19,6 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
     role: user?.role,
     path: location.pathname 
   });
-
-  // ✅ Check for cross-domain auth in URL hash
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#auth=')) {
-      try {
-        const authData = JSON.parse(atob(hash.replace('#auth=', '')));
-        console.log('✅ ProtectedRoute: Cross-domain auth detected');
-        
-        // ✅ Store in localStorage
-        localStorage.setItem('auth_token', authData.token);
-        localStorage.setItem('auth_user', JSON.stringify(authData.user));
-        
-        // ✅ Remove hash from URL
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        
-        // ✅ Reload to apply auth
-        window.location.reload();
-        return;
-      } catch (error) {
-        console.error('❌ ProtectedRoute hash auth error:', error);
-      }
-    }
-  }, []);
-
-  // ✅ Check for cross-domain auth in sessionStorage
-  useEffect(() => {
-    const authData = sessionStorage.getItem('cross_domain_auth');
-    if (authData) {
-      try {
-        const { token, user: userData } = JSON.parse(authData);
-        console.log('✅ ProtectedRoute: Cross-domain auth from sessionStorage');
-        
-        // ✅ Store in localStorage
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-        
-        // ✅ Clear sessionStorage
-        sessionStorage.removeItem('cross_domain_auth');
-        
-        // ✅ Reload to apply auth
-        window.location.reload();
-        return;
-      } catch (error) {
-        console.error('❌ ProtectedRoute sessionStorage auth error:', error);
-        sessionStorage.removeItem('cross_domain_auth');
-      }
-    }
-  }, []);
 
   // ✅ Wait for auth to load
   if (loading) {

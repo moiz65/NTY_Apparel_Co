@@ -34,7 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('auth_user');
 
-    console.log('🔍 AuthProvider: Loading from localStorage', { storedToken, storedUser });
+    console.log('🔍 AuthProvider: Loading from localStorage', {
+      hasToken: !!storedToken,
+      hasUser: !!storedUser
+    });
 
     if (storedToken && storedUser) {
       try {
@@ -47,8 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
       }
-    } else {
-      console.log('❌ AuthProvider: No user in storage');
     }
     setLoading(false);
   }, []);

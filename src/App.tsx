@@ -1,3 +1,4 @@
+// App.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
@@ -5,14 +6,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
-import { AdminGuard } from "./components/AdminGuard.tsx";
-import { RequireAuth } from "./components/RequireAuth.tsx";
 import SupportTab from "./components/SupportTab.tsx";
 import { RefTracker } from "./components/RefTracker.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
-// Lazy-loaded routes to keep the initial bundle small + fast first paint.
+// Lazy-loaded routes
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const Product = lazy(() => import("./pages/Product.tsx"));
 const Story = lazy(() => import("./pages/Story.tsx"));
@@ -36,26 +35,22 @@ const ScrollToTop = () => {
   return null;
 };
 
-// ✅ Cross-Domain Auth Handler Component
+// ✅ ONLY ONE Cross-Domain Auth Handler (Remove from ProtectedRoute)
 const CrossDomainAuthHandler = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // ✅ Check for auth in URL hash (cross-domain login from login.ntygear.com)
+    // ✅ Check for auth in URL hash
     const hash = window.location.hash;
     if (hash && hash.startsWith('#auth=')) {
       try {
         const authData = JSON.parse(atob(hash.replace('#auth=', '')));
-        console.log('✅ Cross-domain auth detected from URL hash:', authData);
+        console.log('✅ Cross-domain auth detected from URL hash');
         
-        // ✅ Store in localStorage
         localStorage.setItem('auth_token', authData.token);
         localStorage.setItem('auth_user', JSON.stringify(authData.user));
         
-        // ✅ Remove hash from URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        
-        // ✅ Reload to apply auth
         window.location.reload();
         return;
       } catch (error) {
@@ -68,16 +63,11 @@ const CrossDomainAuthHandler = () => {
     if (authData) {
       try {
         const { token, user } = JSON.parse(authData);
-        console.log('✅ Cross-domain auth from sessionStorage:', { user });
+        console.log('✅ Cross-domain auth from sessionStorage');
         
-        // ✅ Store in localStorage
         localStorage.setItem('auth_token', token);
         localStorage.setItem('auth_user', JSON.stringify(user));
-        
-        // ✅ Clear sessionStorage
         sessionStorage.removeItem('cross_domain_auth');
-        
-        // ✅ Reload to apply auth
         window.location.reload();
         return;
       } catch (error) {
@@ -105,7 +95,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CrossDomainAuthHandler /> {/* ✅ Add cross-domain auth handler */}
+          <CrossDomainAuthHandler />
           <ScrollToTop />
           <RefTracker />
           <SupportTab />
@@ -125,7 +115,6 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/natty-verification" element={<NattyVerified />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
