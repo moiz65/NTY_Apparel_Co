@@ -37,24 +37,24 @@ const Auth = () => {
   const isSubdomain = window.location.hostname.includes('login.');
   const mainDomain = 'https://ntygear.com';
 
-  // ✅ Redirect if already logged in
+  // ✅ ONLY ONE useEffect for redirect
   useEffect(() => {
     if (authLoading) return;
 
     if (user && !redirecting) {
       setRedirecting(true);
 
-      // ✅ If on subdomain, redirect to main domain
+      // ✅ If on subdomain, redirect to main domain with query params
       if (isSubdomain) {
         const token = localStorage.getItem('auth_token');
-        const userData = btoa(JSON.stringify({ token, user }));
-
-        // ✅ Redirect to main domain home with auth hash
-        const redirectUrl = `${mainDomain}/#auth=${userData}`;
+        const userData = encodeURIComponent(JSON.stringify(user));
+        
+        // ✅ Use query parameters instead of hash (Shopify supports this)
+        const redirectUrl = `${mainDomain}/?auth_token=${token}&auth_user=${userData}&auth_success=true`;
         console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
 
-        // ✅ Use window.location.replace to prevent back button issues
-        window.location.replace(redirectUrl);
+        // ✅ Use window.location.href for Shopify redirect
+        window.location.href = redirectUrl;
         return;
       }
 
@@ -96,7 +96,6 @@ const Auth = () => {
         await signIn(email, password);
       }
 
-      // ✅ After login, useEffect will handle redirect to home
       console.log('✅ Login successful, redirecting...');
 
     } catch (error) {
@@ -381,13 +380,6 @@ const Auth = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="max-w-md mx-auto px-6 py-16">
-        {/* ✅ Subdomain indicator
-        {isSubdomain && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <p className="text-xs text-blue-700">🔐 Secure login portal</p>
-          </div>
-        )} */}
-
         <h1 className="text-3xl tracking-widest mb-2" style={{ fontFamily: "'Arial Black', sans-serif" }}>
           {mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
         </h1>
