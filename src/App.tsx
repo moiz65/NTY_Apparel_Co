@@ -1,4 +1,3 @@
-// App.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
@@ -6,12 +5,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
+import { AdminGuard } from "./components/AdminGuard.tsx";
+import { RequireAuth } from "./components/RequireAuth.tsx";
 import SupportTab from "./components/SupportTab.tsx";
 import { RefTracker } from "./components/RefTracker.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
-// Lazy-loaded routes
+
+// Lazy-loaded routes to keep the initial bundle small + fast first paint.
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const Product = lazy(() => import("./pages/Product.tsx"));
 const Story = lazy(() => import("./pages/Story.tsx"));
@@ -35,35 +37,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-// ✅ ONLY ONE Cross-Domain Auth Handler (Remove from ProtectedRoute)
-const CrossDomainAuthHandler = () => {
-  useEffect(() => {
-    // ✅ Check for auth in URL hash (from login.ntygear.com)
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#auth=')) {
-      try {
-        const authData = JSON.parse(decodeURIComponent(hash.replace('#auth=', '')));
-        console.log('✅ Cross-domain auth detected from URL hash');
-
-        // ✅ Store in localStorage
-        localStorage.setItem('auth_token', authData.token);
-        localStorage.setItem('auth_user', JSON.stringify(authData.user));
-
-        // ✅ Remove hash from URL
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-
-        // AuthProvider has already mounted, so reload to hydrate it from storage.
-        window.location.reload();
-        return;
-      } catch (error) {
-        console.error('❌ Hash auth error:', error);
-      }
-    }
-  }, []);
-
-  return null;
-};
-
 const RouteFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center text-xs tracking-widest uppercase text-muted-foreground">
     Loading…
@@ -79,7 +52,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CrossDomainAuthHandler />
           <ScrollToTop />
           <RefTracker />
           <SupportTab />
@@ -96,9 +68,10 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/natty-verification" element={<NattyVerified />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

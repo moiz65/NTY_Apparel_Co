@@ -1,7 +1,7 @@
 // components/ProtectedRoute.tsx
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
+import { toast } from './ui/use-toast';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,8 +10,10 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
+  console.log('🔒 ProtectedRoute:', { loading, user, adminOnly, role: user?.role });
+
+  // ✅ Wait for auth to load
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -20,30 +22,25 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
     );
   }
 
+  // ✅ Redirect to auth if not logged in
   if (!user) {
     console.log('❌ No user, redirecting to auth');
-    const returnUrl = encodeURIComponent(location.pathname + location.search);
-    
-    if (window.location.hostname.includes('login.')) {
-      return <Navigate to={`/auth?returnUrl=${returnUrl}`} replace />;
-    }
-    
-    window.location.href = `https://login.ntygear.com/auth?returnUrl=${returnUrl}`;
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
-  if (adminOnly && user.role !== 'admin') {
-    console.log('❌ Not admin, redirecting to account');
-    toast.error('You do not have admin access.');
-    
-    if (window.location.hostname.includes('login.')) {
-      window.location.href = 'https://ntygear.com/account';
-      return null;
+  // ✅ Check admin role
+  if (adminOnly) {
+    if (user.role !== 'admin') {
+      console.log('❌ Not admin, redirecting to account');
+      toast({
+        title: 'Access denied',
+        description: 'You do not have admin access.',
+        variant: 'destructive',
+      });
+      return <Navigate to="/account" replace />;
     }
-    
-    return <Navigate to="/account" replace />;
   }
 
-  console.log('✅ Access granted to:', user.role);
+  console.log('✅ Access granted');
   return <>{children}</>;
 }

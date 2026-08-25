@@ -33,44 +33,22 @@ const Auth = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // ✅ Detect if on subdomain
-  const isSubdomain = window.location.hostname.includes('login.');
-  const mainDomain = 'https://ntygear.com';
-
-  // ✅ ONLY ONE useEffect for redirect
+  // ✅ Redirect logged-in users to the dashboard for their role.
   useEffect(() => {
     if (authLoading) return;
-
+    
     if (user && !redirecting) {
       setRedirecting(true);
-
-      // ✅ If on subdomain, transfer the session to the main domain.
-      if (isSubdomain) {
-        const token = localStorage.getItem('auth_token');
-        const authPayload = encodeURIComponent(JSON.stringify({ token, user }));
-        const destination = user.role === 'admin' ? '/admin' : '/account';
-        const redirectUrl = `${mainDomain}${destination}#auth=${authPayload}`;
-        console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
-
-        // ✅ Use a full navigation so the main domain can hydrate its own storage.
-        window.location.href = redirectUrl;
-        return;
-      }
-
-      // ✅ If on main domain, navigate based on role
-      let destination = '/';
-      if (user.role === 'admin') {
-        destination = '/admin';
-      } else {
-        destination = '/account';
-      }
-
+      
+      const destination = user.role === 'admin' ? '/admin' : '/account';
+      
       console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
+      
       setTimeout(() => {
-        navigate(destination, { replace: true });
+        window.location.href = destination;
       }, 100);
     }
-  }, [user, authLoading, navigate, redirecting, isSubdomain]);
+  }, [user, authLoading, navigate, redirecting]);
 
   // ✅ Handle Sign In / Sign Up
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,9 +72,7 @@ const Auth = () => {
       } else {
         await signIn(email, password);
       }
-
-      console.log('✅ Login successful, redirecting...');
-
+      // ✅ After login, useEffect redirects to the role-based dashboard.
     } catch (error) {
       console.error('❌ Form error:', error);
     } finally {
@@ -146,7 +122,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
         }),
@@ -184,7 +160,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
           newPassword: newPassword.trim(),
@@ -243,9 +219,6 @@ const Auth = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {isSubdomain ? 'Redirecting to main site...' : 'Loading...'}
-        </p>
       </div>
     );
   }
@@ -267,9 +240,9 @@ const Auth = () => {
             RESET PASSWORD
           </h1>
           <p className="text-sm text-muted-foreground mb-8 uppercase tracking-wider">
-            {!otpSent ? "Enter your email to receive OTP" :
-              !otpVerified ? "Enter the 6-digit OTP sent to your email" :
-                "Set your new password"}
+            {!otpSent ? "Enter your email to receive OTP" : 
+             !otpVerified ? "Enter the 6-digit OTP sent to your email" : 
+             "Set your new password"}
           </p>
 
           {!otpSent ? (
@@ -489,12 +462,9 @@ const Auth = () => {
         </button>
 
         <div className="mt-8">
-          <a
-            href="https://ntygear.com"
-            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition"
-          >
+          <Link to="https://ntygear.com" className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground">
             ← Back to site
-          </a>
+          </Link>
         </div>
       </main>
     </div>
