@@ -42,7 +42,7 @@ const CrossDomainAuthHandler = () => {
     const hash = window.location.hash;
     if (hash && hash.startsWith('#auth=')) {
       try {
-        const authData = JSON.parse(atob(hash.replace('#auth=', '')));
+        const authData = JSON.parse(decodeURIComponent(hash.replace('#auth=', '')));
         console.log('✅ Cross-domain auth detected from URL hash');
 
         // ✅ Store in localStorage
@@ -52,10 +52,8 @@ const CrossDomainAuthHandler = () => {
         // ✅ Remove hash from URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
-        // ✅ ONLY reload if user not already set
-        if (!localStorage.getItem('auth_user')) {
-          window.location.reload();
-        }
+        // AuthProvider has already mounted, so reload to hydrate it from storage.
+        window.location.reload();
         return;
       } catch (error) {
         console.error('❌ Hash auth error:', error);

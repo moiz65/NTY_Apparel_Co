@@ -44,16 +44,15 @@ const Auth = () => {
     if (user && !redirecting) {
       setRedirecting(true);
 
-      // ✅ If on subdomain, redirect to main domain with query params
+      // ✅ If on subdomain, transfer the session to the main domain.
       if (isSubdomain) {
         const token = localStorage.getItem('auth_token');
-        const userData = encodeURIComponent(JSON.stringify(user));
-        
-        // ✅ Use query parameters instead of hash (Shopify supports this)
-        const redirectUrl = `${mainDomain}/?auth_user=${user.role}&auth_success=true`;
+        const authPayload = encodeURIComponent(JSON.stringify({ token, user }));
+        const destination = user.role === 'admin' ? '/admin' : '/account';
+        const redirectUrl = `${mainDomain}${destination}#auth=${authPayload}`;
         console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
 
-        // ✅ Use window.location.href for Shopify redirect
+        // ✅ Use a full navigation so the main domain can hydrate its own storage.
         window.location.href = redirectUrl;
         return;
       }
@@ -62,7 +61,7 @@ const Auth = () => {
       let destination = '/';
       if (user.role === 'admin') {
         destination = '/admin';
-      } else if (user.role === 'customer') {
+      } else {
         destination = '/account';
       }
 

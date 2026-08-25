@@ -1,0 +1,1 @@
+import{j as r,U as s,H as e,F as a}from"./index-ClNQmZ3p.js";import{B as o}from"./NattyVerifiedForm-DTVVGnKg.js";import"./circle-check-CnwHl6ee.js";import"./arrow-right-DOAFUeUn.js";const x=()=>r.jsxs("div",{className:"min-h-screen bg-background",children:[r.jsx(s,{}),r.jsx(e,{}),r.jsx(o,{}),r.jsx(a,{})]});export{x as default};

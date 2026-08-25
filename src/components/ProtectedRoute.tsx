@@ -2,7 +2,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,27 +11,8 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [isChecking, setIsChecking] = useState(true);
 
-  // ✅ Check cross-domain auth only once
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#auth=')) {
-      try {
-        const authData = JSON.parse(atob(hash.replace('#auth=', '')));
-        localStorage.setItem('auth_token', authData.token);
-        localStorage.setItem('auth_user', JSON.stringify(authData.user));
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        window.location.reload();
-        return;
-      } catch (error) {
-        console.error('Hash auth error:', error);
-      }
-    }
-    setIsChecking(false);
-  }, []);
-
-  if (isChecking || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
