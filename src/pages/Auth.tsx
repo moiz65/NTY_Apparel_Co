@@ -41,7 +41,7 @@ const Auth = () => {
       setRedirecting(true);
       
       // ✅ Both admin and customer go to home after login
-      let destination = '/';
+      let destination = 'http://ntygear.com'; //
       
       console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
       
