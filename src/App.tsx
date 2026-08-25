@@ -37,45 +37,31 @@ const ScrollToTop = () => {
 
 // ✅ ONLY ONE Cross-Domain Auth Handler (Remove from ProtectedRoute)
 const CrossDomainAuthHandler = () => {
-  const location = useLocation();
-
   useEffect(() => {
-    // ✅ Check for auth in URL hash
+    // ✅ Check for auth in URL hash (from login.ntygear.com)
     const hash = window.location.hash;
     if (hash && hash.startsWith('#auth=')) {
       try {
         const authData = JSON.parse(atob(hash.replace('#auth=', '')));
         console.log('✅ Cross-domain auth detected from URL hash');
-        
+
+        // ✅ Store in localStorage
         localStorage.setItem('auth_token', authData.token);
         localStorage.setItem('auth_user', JSON.stringify(authData.user));
-        
+
+        // ✅ Remove hash from URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        window.location.reload();
+
+        // ✅ ONLY reload if user not already set
+        if (!localStorage.getItem('auth_user')) {
+          window.location.reload();
+        }
         return;
       } catch (error) {
         console.error('❌ Hash auth error:', error);
       }
     }
-    
-    // ✅ Check sessionStorage for cross-domain auth
-    const authData = sessionStorage.getItem('cross_domain_auth');
-    if (authData) {
-      try {
-        const { token, user } = JSON.parse(authData);
-        console.log('✅ Cross-domain auth from sessionStorage');
-        
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('auth_user', JSON.stringify(user));
-        sessionStorage.removeItem('cross_domain_auth');
-        window.location.reload();
-        return;
-      } catch (error) {
-        console.error('❌ Session storage auth error:', error);
-        sessionStorage.removeItem('cross_domain_auth');
-      }
-    }
-  }, [location]);
+  }, []);
 
   return null;
 };

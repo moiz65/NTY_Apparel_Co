@@ -73,42 +73,6 @@ const Auth = () => {
     }
   }, [user, authLoading, navigate, redirecting, isSubdomain]);
 
-  // ✅ Redirect if already logged in
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (user && !redirecting) {
-      setRedirecting(true);
-
-      // ✅ If on subdomain, redirect to main domain HOME
-      if (isSubdomain) {
-        const token = localStorage.getItem('auth_token');
-
-        // ✅ Encode auth data for URL hash
-        const authData = btoa(JSON.stringify({ token, user }));
-
-        // ✅ Redirect to main domain home with auth hash
-        const redirectUrl = `${mainDomain}/#auth=${authData}`;
-        console.log(`✅ Redirecting from subdomain to main: ${redirectUrl}`);
-        window.location.href = redirectUrl;
-        return;
-      }
-
-      // ✅ If on main domain, navigate based on role
-      let destination = '/';
-      if (user.role === 'admin') {
-        destination = '/admin';
-      } else if (user.role === 'customer') {
-        destination = '/account';
-      }
-
-      console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
-      setTimeout(() => {
-        navigate(destination, { replace: true });
-      }, 100);
-    }
-  }, [user, authLoading, navigate, redirecting, isSubdomain]);
-
   // ✅ Handle Sign In / Sign Up
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
