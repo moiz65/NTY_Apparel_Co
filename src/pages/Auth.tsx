@@ -36,19 +36,46 @@ const Auth = () => {
   // ✅ Redirect logged-in users to the dashboard for their role.
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (user && !redirecting) {
       setRedirecting(true);
-      
+
       const destination = user.role === 'admin' ? '/admin' : '/account';
-      
+
       console.log(`✅ Redirecting to: ${destination} (role: ${user.role})`);
-      
+
       setTimeout(() => {
         window.location.href = destination;
       }, 100);
     }
   }, [user, authLoading, navigate, redirecting]);
+
+  // ✅ Send Welcome Email
+  const sendWelcomeEmail = async (email: string, name: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/email/welcome`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          name: name.trim().split(" ")[0] || name,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Welcome email send failed:", error);
+        return false;
+      }
+
+      console.log("✅ Welcome email sent to:", email);
+      return true;
+    } catch (error) {
+      console.error("Welcome email error:", error);
+      return false;
+    }
+  };
+
 
   // ✅ Handle Sign In / Sign Up
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,6 +96,11 @@ const Auth = () => {
     try {
       if (mode === "signup") {
         await signUp(name, email, password);
+
+        // ✅ Send welcome email after successful signup
+        await sendWelcomeEmail(email, name);
+        toast.success("Welcome! Please check your email.");
+
       } else {
         await signIn(email, password);
       }
@@ -122,7 +154,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
         }),
@@ -160,7 +192,7 @@ const Auth = () => {
       const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: resetEmail.toLowerCase().trim(),
           otp: otp.trim(),
           newPassword: newPassword.trim(),
@@ -240,9 +272,9 @@ const Auth = () => {
             RESET PASSWORD
           </h1>
           <p className="text-sm text-muted-foreground mb-8 uppercase tracking-wider">
-            {!otpSent ? "Enter your email to receive OTP" : 
-             !otpVerified ? "Enter the 6-digit OTP sent to your email" : 
-             "Set your new password"}
+            {!otpSent ? "Enter your email to receive OTP" :
+              !otpVerified ? "Enter the 6-digit OTP sent to your email" :
+                "Set your new password"}
           </p>
 
           {!otpSent ? (

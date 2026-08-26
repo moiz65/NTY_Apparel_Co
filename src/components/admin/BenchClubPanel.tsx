@@ -40,7 +40,7 @@ export function BenchClubPanel() {
   const [busy, setBusy] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // ✅ Video Modal State
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
@@ -49,17 +49,17 @@ export function BenchClubPanel() {
   const loadData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     setRefreshing(true);
-    
+
     try {
       // Fetch applications from MySQL backend
       const appsRes = await fetch(`${API_URL}/api/bench-club/applications?status=all`);
-      
+
       if (!appsRes.ok) {
         const errorText = await appsRes.text();
         console.error("Apps API error:", errorText);
         throw new Error(`HTTP ${appsRes.status}: Failed to fetch applications`);
       }
-      
+
       const appsData = await appsRes.json();
       if (appsData.success) {
         setApps(appsData.data || []);
@@ -69,13 +69,13 @@ export function BenchClubPanel() {
 
       // Fetch members from MySQL backend
       const membersRes = await fetch(`${API_URL}/api/bench-club/members`);
-      
+
       if (!membersRes.ok) {
         const errorText = await membersRes.text();
         console.error("Members API error:", errorText);
         throw new Error(`HTTP ${membersRes.status}: Failed to fetch members`);
       }
-      
+
       const membersData = await membersRes.json();
       if (membersData.success) {
         setMembers(membersData.data || []);
@@ -93,11 +93,39 @@ export function BenchClubPanel() {
 
   useEffect(() => {
     loadData(true);
-    
+
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => loadData(false), 30000);
     return () => clearInterval(interval);
   }, [filter]);
+
+  // ✅ Send Email Function
+  const sendStatusEmail = async (email: string, name: string, status: string, tier: number, memberNumber?: number) => {
+    try {
+      const response = await fetch(`${API_URL}/api/email/bench-club-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          name: name.split(" ")[0] || name,
+          tier,
+          status,
+          memberNumber: memberNumber || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Email send failed:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Email send error:", error);
+      return false;
+    }
+  };
 
   const approve = async (a: App) => {
     setBusy(a.id);
@@ -106,14 +134,20 @@ export function BenchClubPanel() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         throw new Error(errorData.error || "Approval failed.");
       }
-      
+
       const data = await response.json();
-      toast.success(`${a.name} added to ${a.weight_tier} Club! Member #${String(data.data?.member_number || '').padStart(4, '0')}`);
+      const memberNumber = data.data?.member_number || '';
+
+      toast.success(`${a.name} added to ${a.weight_tier} Club! Member #${String(memberNumber).padStart(4, '0')}`);
+
+      // ✅ Send approval email
+      await sendStatusEmail(a.email, a.name, 'approved', a.weight_tier, memberNumber);
+
       await loadData(false);
     } catch (e: any) {
       toast.error(e.message || "Approval failed");
@@ -129,13 +163,17 @@ export function BenchClubPanel() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         throw new Error(errorData.error || "Rejection failed.");
       }
-      
+
       toast.success("Application rejected.");
+
+      // ✅ Send rejection email
+      await sendStatusEmail(a.email, a.name, 'rejected', a.weight_tier);
+
       await loadData(false);
     } catch (e: any) {
       toast.error(e.message || "Rejection failed");
@@ -149,7 +187,7 @@ export function BenchClubPanel() {
     setSelectedVideo(videoUrl);
     setSelectedApplicant(applicantName);
     setShowVideoModal(true);
-    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    document.body.style.overflow = 'hidden';
   };
 
   // ✅ Close Video Modal
@@ -157,11 +195,11 @@ export function BenchClubPanel() {
     setShowVideoModal(false);
     setSelectedVideo(null);
     setSelectedApplicant("");
-    document.body.style.overflow = 'auto'; // Restore scroll
+    document.body.style.overflow = 'auto';
   };
 
   const filtered = apps.filter((r) => (filter === "all" ? true : r.status === filter));
-  
+
   const allCount = apps.length;
   const pendingCount = apps.filter((r) => r.status === "pending").length;
   const approvedCount = apps.filter((r) => r.status === "approved").length;
@@ -199,11 +237,10 @@ export function BenchClubPanel() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`text-sm px-4 py-2.5 -mb-px border-b-2 transition-colors ${
-              tab === t.id
+            className={`text-sm px-4 py-2.5 -mb-px border-b-2 transition-colors ${tab === t.id
                 ? "border-[hsl(211,100%,50%)] text-[hsl(211,100%,50%)] font-medium"
                 : "border-transparent text-[hsl(215,16%,47%)] hover:text-[hsl(222,47%,11%)]"
-            }`}
+              }`}
           >
             {t.label} {t.id === "applications" ? `(${pendingCount})` : `(${members.length})`}
           </button>
@@ -215,41 +252,37 @@ export function BenchClubPanel() {
           <div className="flex gap-2 mb-6 flex-wrap">
             <button
               onClick={() => setFilter("pending")}
-              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${
-                filter === "pending"
+              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${filter === "pending"
                   ? "bg-[hsl(211,100%,50%)] text-white border-[hsl(211,100%,50%)]"
                   : "bg-white text-[hsl(222,47%,11%)] border-[hsl(214,32%,91%)] hover:bg-[hsl(210,40%,96%)]"
-              }`}
+                }`}
             >
               Pending ({pendingCount})
             </button>
             <button
               onClick={() => setFilter("approved")}
-              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${
-                filter === "approved"
+              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${filter === "approved"
                   ? "bg-[hsl(211,100%,50%)] text-white border-[hsl(211,100%,50%)]"
                   : "bg-white text-[hsl(222,47%,11%)] border-[hsl(214,32%,91%)] hover:bg-[hsl(210,40%,96%)]"
-              }`}
+                }`}
             >
               Approved ({approvedCount})
             </button>
             <button
               onClick={() => setFilter("rejected")}
-              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${
-                filter === "rejected"
+              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${filter === "rejected"
                   ? "bg-[hsl(211,100%,50%)] text-white border-[hsl(211,100%,50%)]"
                   : "bg-white text-[hsl(222,47%,11%)] border-[hsl(214,32%,91%)] hover:bg-[hsl(210,40%,96%)]"
-              }`}
+                }`}
             >
               Rejected ({rejectedCount})
             </button>
             <button
               onClick={() => setFilter("all")}
-              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${
-                filter === "all"
+              className={`text-sm px-4 py-2 rounded-lg border transition-colors ${filter === "all"
                   ? "bg-[hsl(211,100%,50%)] text-white border-[hsl(211,100%,50%)]"
                   : "bg-white text-[hsl(222,47%,11%)] border-[hsl(214,32%,91%)] hover:bg-[hsl(210,40%,96%)]"
-              }`}
+                }`}
             >
               All ({allCount})
             </button>
@@ -278,13 +311,12 @@ export function BenchClubPanel() {
                           {a.weight_tier} lb
                         </span>
                         <span
-                          className={`text-xs px-2.5 py-0.5 rounded-full ${
-                            a.status === "approved"
+                          className={`text-xs px-2.5 py-0.5 rounded-full ${a.status === "approved"
                               ? "bg-green-100 text-green-700"
                               : a.status === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
                         >
                           {a.status}
                         </span>
@@ -296,8 +328,7 @@ export function BenchClubPanel() {
                           <span className="flex items-center gap-1.5"><Instagram className="w-3.5 h-3.5 text-pink-500" /> @{a.instagram_handle}</span>
                         )}
                       </div>
-                      
-                      {/* ✅ Video Button - Opens Modal Instead of Redirect */}
+
                       {a.video_url && (
                         <button
                           onClick={() => openVideoModal(a.video_url!, a.name)}
@@ -306,7 +337,7 @@ export function BenchClubPanel() {
                           <Play className="w-4 h-4" /> Watch lift video
                         </button>
                       )}
-                      
+
                       {a.notes && <p className="text-sm text-[hsl(222,47%,11%)] mt-2 whitespace-pre-wrap">{a.notes}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
@@ -380,11 +411,11 @@ export function BenchClubPanel() {
 
       {/* ✅ Video Modal */}
       {showVideoModal && selectedVideo && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={closeVideoModal}
         >
-          <div 
+          <div
             className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
