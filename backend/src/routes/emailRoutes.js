@@ -146,7 +146,7 @@ const getBenchClubApprovedEmail = (name, tier, memberNumber) => {
           <p style="font-size: 16px; color: #333; text-align: center;">Your application for the <span class="highlight">${tier} lb</span> Bench Club has been <strong>approved</strong>!</p>
 
           <div style="text-align: center; color: #ffffff;">
-            <a href="https://login.ntygear.com/account" class="button">View My Account</a>
+            <a href="https://login.ntygear.com/account" class="button" style="color: #ffffff;">View My Account</a>
           </div>
         </div>
 
