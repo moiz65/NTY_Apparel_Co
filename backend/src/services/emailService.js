@@ -13,6 +13,7 @@ const SMTP_REQUIRES_TLS = ['starttls', 'tls'].includes(SMTP_SECURE_RAW) || (!SMT
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || 'noreply@local.test';
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'NTY Apparel';
 
 // ✅ Create Transporter
 const transporter = nodemailer.createTransport({
@@ -51,7 +52,7 @@ export const verifyEmailConnection = async () => {
 export const sendEmail = async (to, template) => {
   try {
     const mailOptions = {
-      from: SMTP_FROM,
+      from: `"${SMTP_FROM_NAME}" <${SMTP_FROM}>`,
       to,
       subject: template.subject,
       html: template.html,
