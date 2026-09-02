@@ -10,7 +10,7 @@ interface BenchClubFormProps {
   onSuccess?: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://ghostwhite-scorpion-772089.hostingersite.com";
 
 const BenchClubForm = ({ onSuccess }: BenchClubFormProps) => {
   const { user, loading: authLoading } = useAuth();

@@ -23,7 +23,7 @@ const NAV: { key: Section; label: string; icon: typeof Gift }[] = [
   { key: "addresses", label: "Addresses", icon: MapPin },
 ];
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://ghostwhite-scorpion-772089.hostingersite.com";
 
 const Account = () => {
   const navigate = useNavigate();
