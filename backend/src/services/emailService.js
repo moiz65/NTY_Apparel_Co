@@ -13,7 +13,7 @@ const SMTP_REQUIRES_TLS = ['starttls', 'tls'].includes(SMTP_SECURE_RAW) || (!SMT
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || 'noreply@local.test';
-const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'NTY Apparel';
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'NATTY';
 
 // ✅ Create Transporter
 const transporter = nodemailer.createTransport({
@@ -71,7 +71,7 @@ export const sendEmail = async (to, template) => {
 // ✅ OTP Email Template
 export const getOTPEmailTemplate = (otp, expiresInMinutes = 10) => {
   return {
-    subject: '🔐 Password Reset OTP - NTY Apparel',
+    subject: '🔐 Password Reset OTP - NATTY',
     html: `
       <!DOCTYPE html>
       <html>
@@ -95,7 +95,7 @@ export const getOTPEmailTemplate = (otp, expiresInMinutes = 10) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>NTY <span>APPAREL</span></h1>
+            <h1>NATTY <span>APPAREL</span></h1>
             <p style="color: #666; font-size: 14px; margin: 5px 0 0;">Password Reset Request</p>
           </div>
 
@@ -113,7 +113,7 @@ export const getOTPEmailTemplate = (otp, expiresInMinutes = 10) => {
           </div>
 
           <div class="footer">
-            <p>NTY Apparel &bull; Built for the natural athlete</p>
+            <p>NATTY Apparel &bull; Built for the natural athlete</p>
             <p style="margin-top: 5px;">© ${new Date().getFullYear()} NTY Apparel. All rights reserved.</p>
           </div>
         </div>
@@ -137,7 +137,7 @@ export const getOTPEmailTemplate = (otp, expiresInMinutes = 10) => {
 // ✅ Bench Club Application Received Email
 export const getBenchClubReceivedEmail = (name, tier) => {
   return {
-    subject: '✅ Bench Club Application Received - NTY Apparel',
+    subject: '✅ Bench Club Application Received - NATTY Apparel',
     html: `
       <!DOCTYPE html>
       <html>
