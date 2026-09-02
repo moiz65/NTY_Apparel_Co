@@ -6,25 +6,27 @@ dotenv.config();
 
 // ✅ SMTP Configuration
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.office365.com';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
-const SMTP_USER = process.env.SMTP_USER || 'sam@ntygear.com';
+const SMTP_PORT = Number.parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_SECURE_RAW = (process.env.SMTP_SECURE || '').toLowerCase().trim();
+const SMTP_SECURE = ['true', '1', 'yes', 'ssl'].includes(SMTP_SECURE_RAW) && SMTP_PORT === 465;
+const SMTP_REQUIRES_TLS = ['starttls', 'tls'].includes(SMTP_SECURE_RAW) || (!SMTP_SECURE && SMTP_PORT === 587);
+const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_FROM = process.env.SMTP_FROM || 'sam@ntygear.com';
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || 'noreply@local.test';
 
 // ✅ Create Transporter
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,
+  requireTLS: SMTP_REQUIRES_TLS,
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false, // For self-signed certificates
+    rejectUnauthorized: false,
   },
-  // Godaddy specific settings
   pool: true,
   maxConnections: 5,
   maxMessages: 100,
@@ -49,7 +51,7 @@ export const verifyEmailConnection = async () => {
 export const sendEmail = async (to, template) => {
   try {
     const mailOptions = {
-      from: `"NTY Apparel" <${SMTP_FROM}>`,
+      from: SMTP_FROM,
       to,
       subject: template.subject,
       html: template.html,

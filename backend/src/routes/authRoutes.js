@@ -279,7 +279,10 @@ router.post('/forgot-password', async (req, res) => {
       console.log(`✅ OTP sent to ${email}`);
     } catch (emailError) {
       console.error('❌ Email send error:', emailError);
-      // Still return success to user, but log error
+      return res.status(502).json({
+        success: false,
+        error: 'Email provider rejected the OTP email. Please try again later.',
+      });
     }
 
     res.json({
