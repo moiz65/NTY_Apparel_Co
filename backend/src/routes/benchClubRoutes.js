@@ -311,6 +311,7 @@ router.get('/applications', async (req, res) => {
 });
 
 // Approve application (Admin)
+
 router.put('/applications/:id/approve', async (req, res) => {
   const connection = await pool.getConnection();
 
@@ -319,6 +320,7 @@ router.put('/applications/:id/approve', async (req, res) => {
 
     await connection.beginTransaction();
 
+    // ✅ Get application details
     const [apps] = await connection.execute(
       'SELECT user_id, full_name, email, weight_tier FROM bench_club_applications WHERE id = ? AND status = "pending"',
       [id]
@@ -330,11 +332,80 @@ router.put('/applications/:id/approve', async (req, res) => {
 
     const app = apps[0];
 
+    // ✅ Check if user already has this tier approved (by user_id + weight_tier)
+    const [existingMember] = await connection.execute(
+      'SELECT id, weight_tier, member_number FROM bench_club_members WHERE user_id = ? AND weight_tier = ?',
+      [app.user_id, app.weight_tier]
+    );
+
+    if (existingMember.length > 0) {
+      // ✅ Already has this tier - just update application status
+      await connection.execute(
+        'UPDATE bench_club_applications SET status = ?, updated_at = NOW() WHERE id = ?',
+        ['approved', id]
+      );
+
+      await connection.commit();
+
+      const member = existingMember[0];
+
+      return res.json({
+        success: true,
+        data: member || null,
+        message: `User already has ${app.weight_tier} lb tier. Application approved!`,
+        isDuplicate: true,
+      });
+    }
+
+    // ✅ Check if user exists with DIFFERENT tier (same email or same user_id)
+    const [existingUser] = await connection.execute(
+      'SELECT id, user_id, weight_tier, member_number FROM bench_club_members WHERE user_id = ? OR email = ?',
+      [app.user_id, app.email]
+    );
+
+    if (existingUser.length > 0) {
+      // ✅ User already exists with different tier - UPDATE existing member
+      const existing = existingUser[0];
+
+      // ✅ Update existing member with new tier
+      await connection.execute(
+        `UPDATE bench_club_members 
+         SET weight_tier = ?, 
+             application_id = ?,
+             updated_at = NOW()
+         WHERE id = ?`,
+        [app.weight_tier, id, existing.id]
+      );
+
+      // ✅ Update application status
+      await connection.execute(
+        'UPDATE bench_club_applications SET status = ?, updated_at = NOW() WHERE id = ?',
+        ['approved', id]
+      );
+
+      await connection.commit();
+
+      // ✅ Get updated member data
+      const [memberResult] = await connection.execute(
+        'SELECT * FROM bench_club_members WHERE id = ?',
+        [existing.id]
+      );
+
+      return res.json({
+        success: true,
+        data: memberResult[0] || null,
+        message: `Member upgraded to ${app.weight_tier} lb tier! Member #${String(existing.member_number).padStart(4, '0')}`,
+        isUpgrade: true,
+      });
+    }
+
+    // ✅ New user - Create new member
     const [countResult] = await connection.execute(
       'SELECT MAX(member_number) as max_num FROM bench_club_members'
     );
     const nextNumber = (countResult[0]?.max_num || 0) + 1;
 
+    // ✅ Insert new member
     await connection.execute(
       `INSERT INTO bench_club_members 
        (user_id, full_name, email, weight_tier, member_number, application_id) 
@@ -342,6 +413,7 @@ router.put('/applications/:id/approve', async (req, res) => {
       [app.user_id, app.full_name, app.email, app.weight_tier, nextNumber, id]
     );
 
+    // ✅ Update application status
     await connection.execute(
       'UPDATE bench_club_applications SET status = ?, updated_at = NOW() WHERE id = ?',
       ['approved', id]
@@ -349,6 +421,7 @@ router.put('/applications/:id/approve', async (req, res) => {
 
     await connection.commit();
 
+    // ✅ Get new member data
     const [memberResult] = await connection.execute(
       'SELECT * FROM bench_club_members WHERE application_id = ?',
       [id]
@@ -357,11 +430,21 @@ router.put('/applications/:id/approve', async (req, res) => {
     res.json({
       success: true,
       data: memberResult[0] || null,
-      message: 'Application approved successfully!',
+      message: `Application approved successfully! Member #${String(nextNumber).padStart(4, '0')}`,
+      isUpgrade: false,
     });
+
   } catch (error) {
     await connection.rollback();
     console.error('Approval error:', error);
+
+    if (error && error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        success: false,
+        error: 'This user already has a membership. Please check existing members.',
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to approve application.',
@@ -372,12 +455,43 @@ router.put('/applications/:id/approve', async (req, res) => {
 });
 
 // Reject application (Admin)
+// src/routes/benchClubRoutes.ts
+
 router.put('/applications/:id/reject', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // ✅ Check if application exists and is pending
+    const [apps] = await pool.execute(
+      'SELECT id, user_id, weight_tier FROM bench_club_applications WHERE id = ? AND status = "pending"',
+      [id]
+    );
+
+    if (!apps.length) {
+      return res.status(404).json({
+        success: false,
+        error: 'Application not found or already processed.',
+      });
+    }
+
+    const app = apps[0];
+
+    // ✅ Check if user already has this tier (to prevent rejecting an already approved tier)
+    const [existingMember] = await pool.execute(
+      'SELECT id FROM bench_club_members WHERE user_id = ? AND weight_tier = ?',
+      [app.user_id, app.weight_tier]
+    );
+
+    if (existingMember.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `User already has ${app.weight_tier} lb tier. Cannot reject.`,
+      });
+    }
+
+    // ✅ Update application status
     const [result] = await pool.execute(
-      'UPDATE bench_club_applications SET status = ?, updated_at = NOW() WHERE id = ? AND status = "pending"',
+      'UPDATE bench_club_applications SET status = ?, updated_at = NOW() WHERE id = ?',
       ['rejected', id]
     );
 
@@ -387,8 +501,9 @@ router.put('/applications/:id/reject', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Application rejected.',
+      message: 'Application rejected successfully.',
     });
+
   } catch (error) {
     console.error('Reject error:', error);
     res.status(500).json({

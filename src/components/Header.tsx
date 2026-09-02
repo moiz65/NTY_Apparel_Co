@@ -1,7 +1,8 @@
+// components/Header.tsx
 import { useEffect, useState } from "react";
 import { Menu, X, Search, User, ShoppingCart } from "lucide-react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { to: "https://ntygear.com/collections/all", label: "Shop" },
@@ -13,13 +14,29 @@ const navLinks = [
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [authed, setAuthed] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(!!session));
-    return () => sub.subscription.unsubscribe();
-  }, []);
+  // ✅ Handle Account Icon Click - Role based redirect
+  const handleAccountClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      // If not logged in, go to auth
+      navigate("/auth");
+      return;
+    }
+
+    // ✅ Role based redirect
+    if (user.role === 'admin') {
+      navigate("/admin");
+    } else if (user.role === 'customer') {
+      navigate("/account");
+    } else {
+      // Fallback
+      navigate("/account");
+    }
+  };
 
   return (
     <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
@@ -57,11 +74,30 @@ const Header = () => {
             <button aria-label="Search" className="text-foreground hover:text-accent transition-colors">
               <Search className="w-5 h-5" />
             </button>
-            <Link to={authed ? "/account" : "/auth"} aria-label="Account" className="text-foreground hover:text-accent transition-colors">
+
+            {/* ✅ Account Icon with Role-based redirect */}
+            <button
+              onClick={handleAccountClick}
+              aria-label="Account"
+              className="text-foreground hover:text-accent transition-colors relative"
+            >
               <User className="w-5 h-5" />
-            </Link>
-            <button aria-label="Cart" className="relative text-foreground hover:text-accent transition-colors">
-              <ShoppingCart className="w-5 h-5" />
+              {/* {user && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+              )} */}
+            </button>
+
+            <button
+              onClick={() => { window.location.href = "https://ntygear.com/cart"; }}
+              aria-label="Cart"
+              className="relative text-foreground hover:text-accent transition-colors"
+            >
+              <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                  stroke-width="var(--icon-stroke-width)"
+                  d="M3.392 6.875h13.216v8.016c0 .567-.224 1.112-.624 1.513-.4.402-.941.627-1.506.627H5.522a2.13 2.13 0 0 1-1.506-.627 2.15 2.15 0 0 1-.624-1.513zM8.818 2.969h2.333c.618 0 1.211.247 1.649.686a2.35 2.35 0 0 1 .683 1.658v1.562H6.486V5.313c0-.622.246-1.218.683-1.658a2.33 2.33 0 0 1 1.65-.686">
+                </path>
+              </svg>
             </button>
           </div>
         </div>

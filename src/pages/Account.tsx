@@ -14,10 +14,10 @@ import { Gift, Package, User, MapPin, LogOut, Ticket, Users, Dumbbell } from "lu
 type Section = "rewards" | "orders" | "codes" | "benchclub" | "affiliate" | "details" | "addresses";
 
 const NAV: { key: Section; label: string; icon: typeof Gift }[] = [
-  { key: "rewards", label: "Rewards", icon: Gift },
-  { key: "orders", label: "Orders", icon: Package },
-  { key: "codes", label: "Codes", icon: Ticket },
-  { key: "benchclub", label: "Bench Club", icon: Dumbbell },
+  // { key: "rewards", label: "Rewards", icon: Gift },
+  // { key: "orders", label: "Orders", icon: Package },
+  // { key: "codes", label: "Codes", icon: Ticket },
+  { key: "benchclub", label: "Natty Verified", icon: Dumbbell },
   { key: "affiliate", label: "Affiliate Dashboard", icon: Users },
   { key: "details", label: "Account Details", icon: User },
   { key: "addresses", label: "Addresses", icon: MapPin },
@@ -28,7 +28,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const Account = () => {
   const navigate = useNavigate();
   const { user, loading, signOut, updateUser } = useAuth(); // ✅ Add updateUser
-  const [section, setSection] = useState<Section>("rewards");
+  const [section, setSection] = useState<Section>("benchclub");
   const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import heroImage from "@/assets/hero-athlete.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative h-[calc(100vh-90px)] w-full overflow-hidden">
+    <section className="relative h-[76vh] md:h-[calc(100vh-90px)] w-full overflow-hidden">
       {/* Background image */}
       <div className="absolute inset-0">
         <img
@@ -23,7 +23,7 @@ const HeroSection = () => {
           Premium apparel for natural athletes
         </p>
         <a
-          href="#shop"
+          href="https://ntygear.com/collections/all"
           className="inline-block bg-foreground text-background font-body text-sm tracking-[0.2em] uppercase px-10 py-4 hover:bg-accent hover:text-accent-foreground transition-colors duration-200 animate-fade-in-up"
           style={{ animationDelay: '0.3s' }}
         >
